@@ -1,2 +1,6 @@
 /target/
 **/*.rs.bk
+*.obj
+*.off
+*.pdf
+*.npy

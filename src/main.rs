@@ -16,13 +16,13 @@ mod tribox;
 fn voxel_grid(size: usize, border: usize, vertices: &[[f32; 3]]) -> ([f32; 3], f32) {
     let mut bounding_min = vertices[0];
     let mut bounding_max = vertices[0];
-    for point in vertices.iter() {
-        for i in 0..3 {
-            if bounding_min[i] > point[i] {
-                bounding_min[i] = point[i];
+    for vert in vertices.iter() {
+        for dim in 0..3 {
+            if bounding_min[dim] > vert[dim] {
+                bounding_min[dim] = vert[dim];
             }
-            if bounding_max[i] < point[i] {
-                bounding_max[i] = point[i];
+            if bounding_max[dim] < vert[dim] {
+                bounding_max[dim] = vert[dim];
             }
         }
     }
@@ -44,18 +44,14 @@ fn tri_voxel_overlap(triverts: &[[f32; 3]; 3],
                      -> Vec<usize> {
     let mut tri_min = triverts[0];
     let mut tri_max = triverts[0];
-    for i in 0..3 {
-        if tri_max[i] < triverts[1][i] {
-            tri_max[i] = triverts[1][i];
-        }
-        if tri_min[i] > triverts[1][i] {
-            tri_min[i] = triverts[1][i];
-        }
-        if tri_max[i] < triverts[2][i] {
-            tri_max[i] = triverts[2][i];
-        }
-        if tri_min[i] > triverts[2][i] {
-            tri_min[i] = triverts[2][i];
+    for i in 1..3 {
+        for dim in 0..3 {
+            if tri_min[dim] > triverts[i][dim] {
+                tri_min[dim] = triverts[i][dim];
+            }
+            if tri_max[dim] < triverts[i][dim] {
+                tri_max[dim] = triverts[i][dim];
+            }
         }
     }
 
@@ -164,7 +160,8 @@ fn main() {
     let size: usize = matches.value_of("size").unwrap().parse().unwrap();
     let mut voxel = vec![0u8; size * size * size];
 
-    let o = obj::load::<obj::SimplePolygon>(Path::new(matches.value_of("INPUT").unwrap())).unwrap();
+    let file = Path::new(matches.value_of("INPUT").unwrap());
+    let o = obj::load::<obj::SimplePolygon>(file).expect(&format!("Cannot open {:?}", file));
 
     let border: usize = matches.value_of("border").unwrap_or("0").parse().unwrap();
     let (origin, cube_size) = voxel_grid(size, border, &o.position);
@@ -172,12 +169,12 @@ fn main() {
     for object in o.objects {
         for group in object.groups {
             for face in group.indices {
-                assert!(face.len() == 3, "not made of triangles");
+                for k in 1..face.len() - 1 {
+                    let triverts = [o.position[face[0].0], o.position[face[k].0], o.position[face[k + 1].0]];
 
-                let triverts = [o.position[face[0].0], o.position[face[1].0], o.position[face[2].0]];
-
-                for i in tri_voxel_overlap(&triverts, &origin, cube_size, size) {
-                    voxel[i] = 1;
+                    for i in tri_voxel_overlap(&triverts, &origin, cube_size, size) {
+                        voxel[i] = 1;
+                    }
                 }
             }
         }
