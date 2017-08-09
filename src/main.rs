@@ -5,11 +5,13 @@ extern crate obj;
 extern crate clap;
 extern crate nalgebra as na;
 extern crate kiss3d;
+extern crate rand;
 use std::path::Path;
 
 use kiss3d::window::Window;
 use kiss3d::light::Light;
 use na::Translation3;
+use rand::Rand;
 
 mod tribox;
 
@@ -141,7 +143,8 @@ fn main() {
             .long("border")
             .value_name("B")
             .required(false)
-            .help("Add a border of empty voxels around the result. The output size remain SIZE but the object occupies only SIZE - 2 B.")
+            .help("Add a border of empty voxels around the result. The output size remain SIZE \
+                   but the object occupies only SIZE - 2 B.")
             .takes_value(true))
         .arg(clap::Arg::with_name("INPUT")
             .help("The input Obj file to read")
@@ -155,13 +158,34 @@ fn main() {
             .short("v")
             .long("view")
             .help("Visualize the result in 3D"))
+        .arg(clap::Arg::with_name("rotate")
+            .short("r")
+            .long("rotate")
+            .help("Apply a random rotation"))
         .get_matches();
 
     let size: usize = matches.value_of("size").unwrap().parse().unwrap();
     let mut voxel = vec![0u8; size * size * size];
 
     let file = Path::new(matches.value_of("INPUT").unwrap());
-    let o = obj::load::<obj::SimplePolygon>(file).expect(&format!("Cannot open {:?}", file));
+    let mut o = obj::load::<obj::SimplePolygon>(file).expect(&format!("Cannot open {:?}", file));
+
+    if matches.is_present("rotate") {
+        let r = na::Rotation3::rand(&mut rand::thread_rng());
+
+        for position in o.position.iter_mut() {
+            let vec = r * na::Vector3::new(position[0], position[1], position[2]);
+            position[0] = vec[0];
+            position[1] = vec[1];
+            position[2] = vec[2];
+        }
+        for normal in o.normal.iter_mut() {
+            let vec = r * na::Vector3::new(normal[0], normal[1], normal[2]);
+            normal[0] = vec[0];
+            normal[1] = vec[1];
+            normal[2] = vec[2];
+        }
+    }
 
     let border: usize = matches.value_of("border").unwrap_or("0").parse().unwrap();
     let (origin, cube_size) = voxel_grid(size, border, &o.position);
@@ -170,7 +194,8 @@ fn main() {
         for group in object.groups {
             for face in group.indices {
                 for k in 1..face.len() - 1 {
-                    let triverts = [o.position[face[0].0], o.position[face[k].0], o.position[face[k + 1].0]];
+                    let triverts =
+                        [o.position[face[0].0], o.position[face[k].0], o.position[face[k + 1].0]];
 
                     for i in tri_voxel_overlap(&triverts, &origin, cube_size, size) {
                         voxel[i] = 1;
