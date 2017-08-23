@@ -18,7 +18,11 @@ const Y: usize = 1;
 const Z: usize = 2;
 
 fn cross(v1: &[f32; 3], v2: &[f32; 3]) -> [f32; 3] {
-    [v1[1] * v2[2] - v1[2] * v2[1], v1[2] * v2[0] - v1[0] * v2[2], v1[0] * v2[1] - v1[1] * v2[0]]
+    [
+        v1[1] * v2[2] - v1[2] * v2[1],
+        v1[2] * v2[0] - v1[0] * v2[2],
+        v1[0] * v2[1] - v1[1] * v2[0],
+    ]
 }
 
 fn dot(v1: &[f32; 3], v2: &[f32; 3]) -> f32 {
@@ -73,13 +77,14 @@ fn plane_box_overlap(normal: &[f32; 3], vert: &[f32; 3], maxbox: &[f32; 3]) -> b
         return true;
     }
 
-    return false;
+    false
 }
 
-pub fn tri_box_overlap(boxcenter: &[f32; 3],
-                       boxhalfsize: &[f32; 3],
-                       triverts: &[[f32; 3]; 3])
-                       -> bool {
+pub fn tri_box_overlap(
+    boxcenter: &[f32; 3],
+    boxhalfsize: &[f32; 3],
+    triverts: &[[f32; 3]; 3],
+) -> bool {
     /*    use separating axis theorem to test overlap between triangle and box */
     /*    need to test for overlap in these directions: */
     /*    1) the {x,y,z}-directions (actually, since we use the AABB of the triangle */
@@ -194,9 +199,15 @@ pub fn tri_box_overlap(boxcenter: &[f32; 3],
     // AXISTEST_X01(e0[Z], e0[Y], fez, fey);
     // AXISTEST_Y02(e0[Z], e0[X], fez, fex);
     // AXISTEST_Z12(e0[Y], e0[X], fey, fex);
-    if axistest_x01(e0[Z], e0[Y], fez, fey) { return false; }
-    if axistest_y02(e0[Z], e0[X], fez, fex) { return false; }
-    if axistest_z12(e0[Y], e0[X], fey, fex) { return false; }
+    if axistest_x01(e0[Z], e0[Y], fez, fey) {
+        return false;
+    }
+    if axistest_y02(e0[Z], e0[X], fez, fex) {
+        return false;
+    }
+    if axistest_z12(e0[Y], e0[X], fey, fex) {
+        return false;
+    }
 
     let fex = f32::abs(e1[X]);
     let fey = f32::abs(e1[Y]);
@@ -204,9 +215,15 @@ pub fn tri_box_overlap(boxcenter: &[f32; 3],
     // AXISTEST_X01(e1[Z], e1[Y], fez, fey);
     // AXISTEST_Y02(e1[Z], e1[X], fez, fex);
     // AXISTEST_Z0(e1[Y], e1[X], fey, fex);
-    if axistest_x01(e1[Z], e1[Y], fez, fey) { return false; }
-    if axistest_y02(e1[Z], e1[X], fez, fex) { return false; }
-    if axistest_z0(e1[Y], e1[X], fey, fex) { return false; }
+    if axistest_x01(e1[Z], e1[Y], fez, fey) {
+        return false;
+    }
+    if axistest_y02(e1[Z], e1[X], fez, fex) {
+        return false;
+    }
+    if axistest_z0(e1[Y], e1[X], fey, fex) {
+        return false;
+    }
 
     let fex = f32::abs(e2[X]);
     let fey = f32::abs(e2[Y]);
@@ -214,9 +231,15 @@ pub fn tri_box_overlap(boxcenter: &[f32; 3],
     // AXISTEST_X2(e2[Z], e2[Y], fez, fey);
     // AXISTEST_Y1(e2[Z], e2[X], fez, fex);
     // AXISTEST_Z12(e2[Y], e2[X], fey, fex);
-    if axistest_x2(e2[Z], e2[Y], fez, fey) { return false; }
-    if axistest_y1(e2[Z], e2[X], fez, fex) { return false; }
-    if axistest_z12(e2[Y], e2[X], fey, fex) { return false; }
+    if axistest_x2(e2[Z], e2[Y], fez, fey) {
+        return false;
+    }
+    if axistest_y1(e2[Z], e2[X], fez, fex) {
+        return false;
+    }
+    if axistest_z12(e2[Y], e2[X], fey, fex) {
+        return false;
+    }
 
     /* Bullet 1: */
     /*  first test overlap in the {x,y,z}-directions */
