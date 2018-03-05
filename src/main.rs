@@ -7,12 +7,16 @@ extern crate npy;
 extern crate obj;
 extern crate clap;
 extern crate nalgebra as na;
+#[cfg(feature = "viewer")]
 extern crate kiss3d;
 extern crate rand;
 use std::path::Path;
 
+#[cfg(feature = "viewer")]
 use kiss3d::window::Window;
+#[cfg(feature = "viewer")]
 use kiss3d::light::Light;
+#[cfg(feature = "viewer")]
 use na::Translation3;
 use rand::Rand;
 
@@ -108,6 +112,7 @@ fn save_to(voxel: &[u8], file: &str) {
     npy::to_file(file, data.iter()).unwrap();
 }
 
+#[cfg(feature = "viewer")]
 fn visualize(voxel: &[u8], size: usize) {
     let mut window = Window::new("view");
 
@@ -135,6 +140,11 @@ fn visualize(voxel: &[u8], size: usize) {
     }
     window.set_light(Light::StickToCamera);
     while window.render() {}
+}
+
+#[cfg(not(feature = "viewer"))]
+fn visualize(_voxel: &[u8], _size: usize) {
+    panic!("Not compiled with viewer feature");
 }
 
 fn main() {
