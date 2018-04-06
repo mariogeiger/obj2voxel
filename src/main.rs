@@ -1,16 +1,15 @@
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
 
-#[macro_use]
-extern crate npy_derive;
-extern crate npy;
-extern crate obj;
 extern crate clap;
-extern crate nalgebra as na;
 #[cfg(feature = "viewer")]
 extern crate kiss3d;
+extern crate nalgebra as na;
+extern crate npy;
+extern crate obj;
 extern crate rand;
 use std::path::Path;
+use obj::{Obj, SimplePolygon};
 
 #[cfg(feature = "viewer")]
 use kiss3d::window::Window;
@@ -35,10 +34,9 @@ fn voxel_grid(size: usize, border: usize, vertices: &[[f32; 3]]) -> ([f32; 3], f
             }
         }
     }
-    let cube_size: f32 = (0..3).map(|i| bounding_max[i] - bounding_min[i]).fold(
-        0.0,
-        f32::max,
-    ) / ((size - 2 * border) as f32);
+    let cube_size: f32 = (0..3)
+        .map(|i| bounding_max[i] - bounding_min[i])
+        .fold(0.0, f32::max) / ((size - 2 * border) as f32);
 
     let mut origin = [0.0; 3];
     for dim in 0..3 {
@@ -70,13 +68,21 @@ fn tri_voxel_overlap(
     let ijk_min: Vec<usize> = (0..3)
         .map(|dim| {
             let begin = f32::floor((tri_min[dim] - origin[dim]) / cube_size - 0.1) as isize;
-            if begin < 0 { 0usize } else { begin as usize }
+            if begin < 0 {
+                0usize
+            } else {
+                begin as usize
+            }
         })
         .collect();
     let ijk_max: Vec<usize> = (0..3)
         .map(|dim| {
             let end = f32::ceil((tri_max[dim] - origin[dim]) / cube_size + 0.1) as usize;
-            if end > size { size } else { end }
+            if end > size {
+                size
+            } else {
+                end
+            }
         })
         .collect();
 
@@ -93,8 +99,7 @@ fn tri_voxel_overlap(
                     &boxcenter,
                     &[cube_size / 2.0, cube_size / 2.0, cube_size / 2.0],
                     triverts,
-                )
-                {
+                ) {
                     output.push(i * size * size + j * size + k);
                 }
             }
@@ -104,12 +109,7 @@ fn tri_voxel_overlap(
 }
 
 fn save_to(voxel: &[u8], file: &str) {
-    #[derive(NpyData)]
-    struct VoxelValue {
-        field: u8,
-    }
-    let data: Vec<VoxelValue> = voxel.iter().map(|&x| VoxelValue { field: x }).collect();
-    npy::to_file(file, data.iter()).unwrap();
+    npy::to_file(file, voxel.iter().cloned()).unwrap();
 }
 
 #[cfg(feature = "viewer")]
@@ -169,7 +169,7 @@ fn main() {
                 .required(false)
                 .help(
                     "Add a border of empty voxels around the result. The output size remain SIZE \
-                   but the object occupies only SIZE - 2 B.",
+                     but the object occupies only SIZE - 2 B.",
                 )
                 .takes_value(true),
         )
@@ -185,9 +185,12 @@ fn main() {
                 .required(false)
                 .index(2),
         )
-        .arg(clap::Arg::with_name("view").short("v").long("view").help(
-            "Visualize the result in 3D",
-        ))
+        .arg(
+            clap::Arg::with_name("view")
+                .short("v")
+                .long("view")
+                .help("Visualize the result in 3D"),
+        )
         .arg(
             clap::Arg::with_name("rotate")
                 .short("r")
@@ -200,7 +203,7 @@ fn main() {
     let mut voxel = vec![0u8; size * size * size];
 
     let file = Path::new(matches.value_of("INPUT").unwrap());
-    let mut o = obj::load::<obj::SimplePolygon>(file).expect(&format!("Cannot open {:?}", file));
+    let mut o = Obj::<SimplePolygon>::load(file).expect(&format!("Cannot open {:?}", file));
 
     if matches.is_present("rotate") {
         let r = na::Rotation3::rand(&mut rand::thread_rng());
@@ -224,7 +227,7 @@ fn main() {
 
     for object in o.objects {
         for group in object.groups {
-            for face in group.indices {
+            for face in group.polys {
                 for k in 1..face.len() - 1 {
                     let triverts = [
                         o.position[face[0].0],
