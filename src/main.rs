@@ -8,13 +8,13 @@ extern crate nalgebra as na;
 extern crate npy;
 extern crate obj;
 extern crate rand;
-use std::path::Path;
 use obj::{Obj, SimplePolygon};
+use std::path::Path;
 
 #[cfg(feature = "viewer")]
-use kiss3d::window::Window;
-#[cfg(feature = "viewer")]
 use kiss3d::light::Light;
+#[cfg(feature = "viewer")]
+use kiss3d::window::Window;
 #[cfg(feature = "viewer")]
 use na::Translation3;
 use rand::Rand;
@@ -51,7 +51,7 @@ fn tri_voxel_overlap(
     origin: &[f32; 3],
     cube_size: f32,
     size: usize,
-) -> Vec<usize> {
+) -> Vec<(usize, usize, usize)> {
     let mut tri_min = triverts[0];
     let mut tri_max = triverts[0];
     for vert in triverts {
@@ -100,7 +100,7 @@ fn tri_voxel_overlap(
                     &[cube_size / 2.0, cube_size / 2.0, cube_size / 2.0],
                     triverts,
                 ) {
-                    output.push(i * size * size + j * size + k);
+                    output.push((i, j, k));
                 }
             }
         }
@@ -122,17 +122,20 @@ fn visualize(voxel: &[u8], size: usize) {
     for x in 0..size {
         for y in 0..size {
             for z in 0..size {
-                if voxel[x * size * size + y * size + z] != 0 {
+                let value = voxel[x * size * size + y * size + z];
+                if value != 0 {
                     let cx = origin + cube_size * x as f32;
                     let cy = origin + cube_size * y as f32;
                     let cz = origin + cube_size * z as f32;
 
                     let mut c = window.add_cube(cube_size, cube_size, cube_size);
                     c.append_translation(&Translation3::new(cx, cy, cz));
+
+                    let color = 1.0 - f32::powi(0.3, value as i32);
                     if ((x % 2) + (y % 2) + (z % 2)) % 2 == 0 {
-                        c.set_color(0.7, 0.7, 1.0);
+                        c.set_color(color, color, 1.0);
                     } else {
-                        c.set_color(0.7, 1.0, 0.7);
+                        c.set_color(color, 1.0, color);
                     }
                 }
             }
@@ -192,6 +195,12 @@ fn main() {
                 .help("Visualize the result in 3D"),
         )
         .arg(
+            clap::Arg::with_name("double")
+                .short("d")
+                .long("double")
+                .help("Each cube is redered from 8 smaller cubes"),
+        )
+        .arg(
             clap::Arg::with_name("rotate")
                 .short("r")
                 .long("rotate")
@@ -223,7 +232,8 @@ fn main() {
     }
 
     let border: usize = matches.value_of("border").unwrap_or("0").parse().unwrap();
-    let (origin, cube_size) = voxel_grid(size, border, &o.position);
+    let double = matches.is_present("double");
+    let (origin, cube_size) = voxel_grid(if double { 2 * size } else { size }, border, &o.position);
 
     for object in o.objects {
         for group in object.groups {
@@ -235,11 +245,29 @@ fn main() {
                         o.position[face[k + 1].0],
                     ];
 
-                    for i in tri_voxel_overlap(&triverts, &origin, cube_size, size) {
-                        voxel[i] = 1;
+                    for (i, j, k) in tri_voxel_overlap(
+                        &triverts,
+                        &origin,
+                        cube_size,
+                        if double { 2 * size } else { size },
+                    ) {
+                        if double {
+                            // one bit per minicube
+                            voxel[(i / 2) * size * size + (j / 2) * size + (k / 2)] |=
+                                1 << (i % 2) * 4 + (j % 2) * 2 + (k % 2);
+                        } else {
+                            voxel[i * size * size + j * size + k] = 1;
+                        }
                     }
                 }
             }
+        }
+    }
+
+    if double {
+        for value in &mut voxel {
+            // count the bits
+            *value = ((*value as u64 * 0x200040008001 & 0x111111111111111) % 0xf) as u8;
         }
     }
 

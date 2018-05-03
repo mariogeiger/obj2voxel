@@ -34,7 +34,11 @@ fn sub(v1: &[f32; 3], v2: &[f32; 3]) -> [f32; 3] {
 }
 
 fn min_max2(x0: f32, x1: f32) -> (f32, f32) {
-    if x0 < x1 { (x0, x1) } else { (x1, x0) }
+    if x0 < x1 {
+        (x0, x1)
+    } else {
+        (x1, x0)
+    }
 }
 
 fn min_max3(x0: f32, x1: f32, x2: f32) -> (f32, f32) {
@@ -190,8 +194,6 @@ pub fn tri_box_overlap(
         let rad = fa * boxhalfsize[X] + fb * boxhalfsize[Y];
         min > rad || max < -rad
     };
-
-
 
     let fex = f32::abs(e0[X]);
     let fey = f32::abs(e0[Y]);
