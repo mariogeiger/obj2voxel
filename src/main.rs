@@ -21,7 +21,7 @@ use rand::Rand;
 
 mod tribox;
 
-fn voxel_grid(size: usize, border: usize, vertices: &[[f32; 3]]) -> ([f32; 3], f32) {
+fn bounding_box(vertices: &[[f32; 3]]) -> ([f32; 3], [f32; 3]) {
     let mut bounding_min = vertices[0];
     let mut bounding_max = vertices[0];
     for vert in vertices.iter() {
@@ -34,6 +34,12 @@ fn voxel_grid(size: usize, border: usize, vertices: &[[f32; 3]]) -> ([f32; 3], f
             }
         }
     }
+    (bounding_min, bounding_max)
+}
+
+fn voxel_grid(size: usize, border: usize, vertices: &[[f32; 3]]) -> ([f32; 3], f32) {
+    let (bounding_min, bounding_max) = bounding_box(vertices);
+
     let cube_size: f32 = (0..3)
         .map(|i| bounding_max[i] - bounding_min[i])
         .fold(0.0, f32::max) / ((size - 2 * border) as f32);
@@ -44,6 +50,29 @@ fn voxel_grid(size: usize, border: usize, vertices: &[[f32; 3]]) -> ([f32; 3], f
         origin[dim] = center - cube_size * size as f32 / 2.0;
     }
     (origin, cube_size)
+}
+
+fn voxel_grid_cube_size(size: usize, vertices: &[[f32; 3]], cube_size: f32) -> ([f32; 3], f32) {
+    let (bounding_min, bounding_max) = bounding_box(vertices);
+
+    let mut origin = [0.0; 3];
+    for dim in 0..3 {
+        let center = 0.5 * (bounding_min[dim] + bounding_max[dim]);
+        origin[dim] = center - cube_size * size as f32 / 2.0;
+    }
+    (origin, cube_size)
+}
+
+fn diagonal_bb_cube_size(size: usize, border: usize, vertices: &[[f32; 3]]) -> f32 {
+    let (bounding_min, bounding_max) = bounding_box(vertices);
+
+    let cube_size: f32 = (0..3)
+        .map(|i| bounding_max[i] - bounding_min[i])
+        .map(|x| x.powi(2))
+        .sum::<f32>()
+        .sqrt() / ((size - 2 * border) as f32);
+
+    cube_size
 }
 
 fn tri_voxel_overlap(
@@ -206,6 +235,12 @@ fn main() {
                 .long("rotate")
                 .help("Apply a random rotation"),
         )
+        .arg(
+            clap::Arg::with_name("diagonal_bounding_box")
+                .short("diag")
+                .long("diagonal_bounding_box")
+                .help("Compute the cube size from the diagonal of the original BB"),
+        )
         .get_matches();
 
     let size: usize = matches.value_of("size").unwrap().parse().unwrap();
@@ -213,6 +248,11 @@ fn main() {
 
     let file = Path::new(matches.value_of("INPUT").unwrap());
     let mut o = Obj::<SimplePolygon>::load(file).expect(&format!("Cannot open {:?}", file));
+
+    let border: usize = matches.value_of("border").unwrap_or("0").parse().unwrap();
+    let double = matches.is_present("double");
+    let cube_size =
+        diagonal_bb_cube_size(if double { 2 * size } else { size }, border, &o.position);
 
     if matches.is_present("rotate") {
         let r = na::Rotation3::rand(&mut rand::thread_rng());
@@ -231,9 +271,11 @@ fn main() {
         }
     }
 
-    let border: usize = matches.value_of("border").unwrap_or("0").parse().unwrap();
-    let double = matches.is_present("double");
-    let (origin, cube_size) = voxel_grid(if double { 2 * size } else { size }, border, &o.position);
+    let (origin, cube_size) = if matches.is_present("diagonal_bounding_box") {
+        voxel_grid_cube_size(if double { 2 * size } else { size }, &o.position, cube_size)
+    } else {
+        voxel_grid(if double { 2 * size } else { size }, border, &o.position)
+    };
 
     for object in o.objects {
         for group in object.groups {
