@@ -236,6 +236,36 @@ fn main() {
                 .help("Apply a random rotation"),
         )
         .arg(
+            clap::Arg::with_name("alpha_rot")
+                .short("a")
+                .long("alpha_rot")
+                .value_name("ALPHA")
+                .required(false)
+                .default_value("0.0")
+                .help("Apply a rotation around Z axis")
+                .takes_value(true),
+        )
+        .arg(
+            clap::Arg::with_name("beta_rot")
+                .short("b")
+                .long("beta_rot")
+                .value_name("BETA")
+                .required(false)
+                .default_value("0.0")
+                .help("Apply a rotation around Y axis")
+                .takes_value(true),
+        )
+        .arg(
+            clap::Arg::with_name("gamma_rot")
+                .short("c")
+                .long("gamma_rot")
+                .value_name("GAMMA")
+                .required(false)
+                .default_value("0.0")
+                .help("Apply a rotation around Z axis")
+                .takes_value(true),
+        )
+        .arg(
             clap::Arg::with_name("diagonal_bounding_box")
                 .short("diag")
                 .long("diagonal_bounding_box")
@@ -247,44 +277,76 @@ fn main() {
     let mut voxel = vec![0u8; size * size * size];
 
     let file = Path::new(matches.value_of("INPUT").unwrap());
-    let mut o = Obj::<SimplePolygon>::load(file).expect(&format!("Cannot open {:?}", file));
+    let mut obj = Obj::<SimplePolygon>::load(file).expect(&format!("Cannot open {:?}", file));
 
     let border: usize = matches.value_of("border").unwrap_or("0").parse().unwrap();
     let double = matches.is_present("double");
     let cube_size =
-        diagonal_bb_cube_size(if double { 2 * size } else { size }, border, &o.position);
+        diagonal_bb_cube_size(if double { 2 * size } else { size }, border, &obj.position);
 
-    if matches.is_present("rotate") {
-        let r = na::Rotation3::rand(&mut rand::thread_rng());
-
-        for position in &mut o.position {
-            let vec = r * na::Vector3::new(position[0], position[1], position[2]);
+    fn rotate_obj(obj: &mut Obj<SimplePolygon>, rot: &na::Rotation3<f32>) {
+        for position in &mut obj.position {
+            let vec = rot * na::Vector3::new(position[0], position[1], position[2]);
             position[0] = vec[0];
             position[1] = vec[1];
             position[2] = vec[2];
         }
-        for normal in &mut o.normal {
-            let vec = r * na::Vector3::new(normal[0], normal[1], normal[2]);
+        for normal in &mut obj.normal {
+            let vec = rot * na::Vector3::new(normal[0], normal[1], normal[2]);
             normal[0] = vec[0];
             normal[1] = vec[1];
             normal[2] = vec[2];
         }
     }
 
+    rotate_obj(
+        &mut obj,
+        &na::Rotation3::new(na::Vector3::new(
+            0.0,
+            0.0,
+            matches.value_of("alpha_rot").unwrap().parse().unwrap(),
+        )),
+    );
+    rotate_obj(
+        &mut obj,
+        &na::Rotation3::new(na::Vector3::new(
+            0.0,
+            matches.value_of("beta_rot").unwrap().parse().unwrap(),
+            0.0,
+        )),
+    );
+    rotate_obj(
+        &mut obj,
+        &na::Rotation3::new(na::Vector3::new(
+            0.0,
+            0.0,
+            matches.value_of("gamma_rot").unwrap().parse().unwrap(),
+        )),
+    );
+
+    if matches.is_present("rotate") {
+        let r = na::Rotation3::rand(&mut rand::thread_rng());
+        rotate_obj(&mut obj, &r);
+    }
+
     let (origin, cube_size) = if matches.is_present("diagonal_bounding_box") {
-        voxel_grid_cube_size(if double { 2 * size } else { size }, &o.position, cube_size)
+        voxel_grid_cube_size(
+            if double { 2 * size } else { size },
+            &obj.position,
+            cube_size,
+        )
     } else {
-        voxel_grid(if double { 2 * size } else { size }, border, &o.position)
+        voxel_grid(if double { 2 * size } else { size }, border, &obj.position)
     };
 
-    for object in o.objects {
+    for object in obj.objects {
         for group in object.groups {
             for face in group.polys {
                 for k in 1..face.len() - 1 {
                     let triverts = [
-                        o.position[face[0].0],
-                        o.position[face[k].0],
-                        o.position[face[k + 1].0],
+                        obj.position[face[0].0],
+                        obj.position[face[k].0],
+                        obj.position[face[k + 1].0],
                     ];
 
                     for (i, j, k) in tri_voxel_overlap(
