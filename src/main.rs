@@ -83,9 +83,9 @@ fn diagonal_bb_xy_cube_size(size: usize, border: usize, vertices: &[[f32; 3]]) -
             .map(|i| bounding_max[i] - bounding_min[i])
             .map(|x| x.powi(2))
             .sum::<f32>()
-            .sqrt() / ((size - 2 * border) as f32),
+            .sqrt(),
         bounding_max[2] - bounding_min[2],
-    );
+    ) / ((size - 2 * border) as f32);
 
     cube_size
 }
