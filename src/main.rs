@@ -75,6 +75,21 @@ fn diagonal_bb_cube_size(size: usize, border: usize, vertices: &[[f32; 3]]) -> f
     cube_size
 }
 
+fn diagonal_bb_xy_cube_size(size: usize, border: usize, vertices: &[[f32; 3]]) -> f32 {
+    let (bounding_min, bounding_max) = bounding_box(vertices);
+
+    let cube_size: f32 = f32::max(
+        (0..2)
+            .map(|i| bounding_max[i] - bounding_min[i])
+            .map(|x| x.powi(2))
+            .sum::<f32>()
+            .sqrt() / ((size - 2 * border) as f32),
+        bounding_max[2] - bounding_min[2],
+    );
+
+    cube_size
+}
+
 fn tri_voxel_overlap(
     triverts: &[[f32; 3]; 3],
     origin: &[f32; 3],
@@ -266,6 +281,14 @@ fn main() {
                 .takes_value(true),
         )
         .arg(
+            clap::Arg::with_name("diagonal_bounding_box_xy")
+                .short("diag_xy")
+                .long("diagonal_bounding_box_xy")
+                .help(
+                    "Compute the cube size from the diagonal of the original BB in xy directions",
+                ),
+        )
+        .arg(
             clap::Arg::with_name("diagonal_bounding_box")
                 .short("diag")
                 .long("diagonal_bounding_box")
@@ -281,8 +304,11 @@ fn main() {
 
     let border: usize = matches.value_of("border").unwrap_or("0").parse().unwrap();
     let double = matches.is_present("double");
-    let cube_size =
-        diagonal_bb_cube_size(if double { 2 * size } else { size }, border, &obj.position);
+    let cube_size = if matches.is_present("diagonal_bounding_box_xy") {
+        diagonal_bb_xy_cube_size(if double { 2 * size } else { size }, border, &obj.position)
+    } else {
+        diagonal_bb_cube_size(if double { 2 * size } else { size }, border, &obj.position)
+    };
 
     fn rotate_obj(obj: &mut Obj<SimplePolygon>, rot: &na::Rotation3<f32>) {
         for position in &mut obj.position {
@@ -329,7 +355,9 @@ fn main() {
         rotate_obj(&mut obj, &r);
     }
 
-    let (origin, cube_size) = if matches.is_present("diagonal_bounding_box") {
+    let (origin, cube_size) = if matches.is_present("diagonal_bounding_box")
+        || matches.is_present("diagonal_bounding_box_xy")
+    {
         voxel_grid_cube_size(
             if double { 2 * size } else { size },
             &obj.position,
