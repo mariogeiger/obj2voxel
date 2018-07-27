@@ -330,7 +330,7 @@ fn main() {
         &na::Rotation3::new(na::Vector3::new(
             0.0,
             0.0,
-            matches.value_of("alpha_rot").unwrap().parse().unwrap(),
+            matches.value_of("gamma_rot").unwrap().parse().unwrap(),
         )),
     );
     rotate_obj(
@@ -346,7 +346,7 @@ fn main() {
         &na::Rotation3::new(na::Vector3::new(
             0.0,
             0.0,
-            matches.value_of("gamma_rot").unwrap().parse().unwrap(),
+            matches.value_of("alpha_rot").unwrap().parse().unwrap(),
         )),
     );
 
