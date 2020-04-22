@@ -9,8 +9,9 @@ clap = "2.31"
 npy = "0.4"
 npy-derive = "0.4"
 kiss3d = { version = "0.13.0", optional = true }
-nalgebra = "0.14"
-rand = "0.4"
+nalgebra = "0.18"
+rand = "0.7"
+rand_distr = "*"
 clippy = {version = "*", optional = true}
 
 [features]

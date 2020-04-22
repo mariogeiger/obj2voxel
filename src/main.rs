@@ -8,7 +8,9 @@ extern crate nalgebra as na;
 extern crate npy;
 extern crate obj;
 extern crate rand;
+extern crate rand_distr;
 use obj::{Obj, SimplePolygon};
+use rand_distr::{Distribution, Normal, Uniform};
 use std::path::Path;
 
 #[cfg(feature = "viewer")]
@@ -17,7 +19,6 @@ use kiss3d::light::Light;
 use kiss3d::window::Window;
 #[cfg(feature = "viewer")]
 use na::Translation3;
-use rand::Rand;
 
 mod tribox;
 
@@ -42,7 +43,8 @@ fn voxel_grid(size: usize, border: usize, vertices: &[[f32; 3]]) -> ([f32; 3], f
 
     let cube_size: f32 = (0..3)
         .map(|i| bounding_max[i] - bounding_min[i])
-        .fold(0.0, f32::max) / ((size - 2 * border) as f32);
+        .fold(0.0, f32::max)
+        / ((size - 2 * border) as f32);
 
     let mut origin = [0.0; 3];
     for dim in 0..3 {
@@ -70,7 +72,8 @@ fn diagonal_bb_cube_size(size: usize, border: usize, vertices: &[[f32; 3]]) -> f
         .map(|i| bounding_max[i] - bounding_min[i])
         .map(|x| x.powi(2))
         .sum::<f32>()
-        .sqrt() / ((size - 2 * border) as f32);
+        .sqrt()
+        / ((size - 2 * border) as f32);
 
     cube_size
 }
@@ -351,7 +354,16 @@ fn main() {
     );
 
     if matches.is_present("rotate") {
-        let r = na::Rotation3::rand(&mut rand::thread_rng());
+        let mut rng = rand::thread_rng();
+        let die = Normal::new(0.0, 1.0f32).unwrap();
+        let a = na::Vector3::new(
+            die.sample(&mut rng),
+            die.sample(&mut rng),
+            die.sample(&mut rng),
+        );
+        let die = Uniform::new(0.0f32, std::f32::consts::PI);
+        let a = die.sample(&mut rng) * a / a.norm();
+        let r = na::Rotation3::new(a);
         rotate_obj(&mut obj, &r);
     }
 
