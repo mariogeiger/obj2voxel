@@ -1,6 +1,3 @@
-#![cfg_attr(feature = "clippy", feature(plugin))]
-#![cfg_attr(feature = "clippy", plugin(clippy))]
-
 extern crate clap;
 #[cfg(feature = "viewer")]
 extern crate kiss3d;
@@ -9,7 +6,7 @@ extern crate npy;
 extern crate obj;
 extern crate rand;
 extern crate rand_distr;
-use obj::{Obj, SimplePolygon};
+use obj::Obj;
 use rand_distr::{Distribution, Normal, Uniform};
 use std::path::Path;
 
@@ -203,27 +200,6 @@ fn main() {
         .author("Mario <geiger.mario@gmail.com>")
         .about("Convert Obj file into voxel")
         .arg(
-            clap::Arg::with_name("size")
-                .short("s")
-                .long("size")
-                .value_name("SIZE")
-                .required(true)
-                .help("Output a SIZExSIZExSIZE voxel")
-                .takes_value(true),
-        )
-        .arg(
-            clap::Arg::with_name("border")
-                .short("b")
-                .long("border")
-                .value_name("B")
-                .required(false)
-                .help(
-                    "Add a border of empty voxels around the result. The output size remain SIZE \
-                     but the object occupies only SIZE - 2 B.",
-                )
-                .takes_value(true),
-        )
-        .arg(
             clap::Arg::with_name("INPUT")
                 .help("The input Obj file to read")
                 .required(true)
@@ -236,6 +212,24 @@ fn main() {
                 .index(2),
         )
         .arg(
+            clap::Arg::with_name("size")
+                .long("size")
+                .value_name("SIZE")
+                .required(true)
+                .help("Output a SIZExSIZExSIZE voxel")
+                .takes_value(true),
+        )
+        .arg(
+            clap::Arg::with_name("border")
+                .long("border")
+                .value_name("B")
+                .help(
+                    "Add a border of empty voxels around the result. The output size remain SIZE \
+                     but the object occupies only SIZE - 2 B.",
+                )
+                .takes_value(true),
+        )
+        .arg(
             clap::Arg::with_name("view")
                 .short("v")
                 .long("view")
@@ -243,49 +237,40 @@ fn main() {
         )
         .arg(
             clap::Arg::with_name("double")
-                .short("d")
                 .long("double")
                 .help("Each cube is redered from 8 smaller cubes"),
         )
         .arg(
             clap::Arg::with_name("rotate")
-                .short("r")
                 .long("rotate")
                 .help("Apply a random rotation"),
         )
         .arg(
             clap::Arg::with_name("alpha_rot")
-                .short("a")
                 .long("alpha_rot")
                 .value_name("ALPHA")
-                .required(false)
                 .default_value("0.0")
                 .help("Apply a rotation around Z axis")
                 .takes_value(true),
         )
         .arg(
             clap::Arg::with_name("beta_rot")
-                .short("b")
                 .long("beta_rot")
                 .value_name("BETA")
-                .required(false)
                 .default_value("0.0")
                 .help("Apply a rotation around Y axis")
                 .takes_value(true),
         )
         .arg(
             clap::Arg::with_name("gamma_rot")
-                .short("c")
                 .long("gamma_rot")
                 .value_name("GAMMA")
-                .required(false)
                 .default_value("0.0")
                 .help("Apply a rotation around Z axis")
                 .takes_value(true),
         )
         .arg(
             clap::Arg::with_name("diagonal_bounding_box_xy")
-                .short("diag_xy")
                 .long("diagonal_bounding_box_xy")
                 .help(
                     "Compute the cube size from the diagonal of the original BB in xy directions",
@@ -293,7 +278,6 @@ fn main() {
         )
         .arg(
             clap::Arg::with_name("diagonal_bounding_box")
-                .short("diag")
                 .long("diagonal_bounding_box")
                 .help("Compute the cube size from the diagonal of the original BB"),
         )
@@ -303,24 +287,32 @@ fn main() {
     let mut voxel = vec![0u8; size * size * size];
 
     let file = Path::new(matches.value_of("INPUT").unwrap());
-    let mut obj = Obj::<SimplePolygon>::load(file).expect(&format!("Cannot open {:?}", file));
+    let mut obj = Obj::load(file).expect(&format!("Cannot open {:?}", file));
 
     let border: usize = matches.value_of("border").unwrap_or("0").parse().unwrap();
     let double = matches.is_present("double");
     let cube_size = if matches.is_present("diagonal_bounding_box_xy") {
-        diagonal_bb_xy_cube_size(if double { 2 * size } else { size }, border, &obj.position)
+        diagonal_bb_xy_cube_size(
+            if double { 2 * size } else { size },
+            border,
+            &obj.data.position,
+        )
     } else {
-        diagonal_bb_cube_size(if double { 2 * size } else { size }, border, &obj.position)
+        diagonal_bb_cube_size(
+            if double { 2 * size } else { size },
+            border,
+            &obj.data.position,
+        )
     };
 
-    fn rotate_obj(obj: &mut Obj<SimplePolygon>, rot: &na::Rotation3<f32>) {
-        for position in &mut obj.position {
+    fn rotate_obj(obj: &mut Obj, rot: &na::Rotation3<f32>) {
+        for position in &mut obj.data.position {
             let vec = rot * na::Vector3::new(position[0], position[1], position[2]);
             position[0] = vec[0];
             position[1] = vec[1];
             position[2] = vec[2];
         }
-        for normal in &mut obj.normal {
+        for normal in &mut obj.data.normal {
             let vec = rot * na::Vector3::new(normal[0], normal[1], normal[2]);
             normal[0] = vec[0];
             normal[1] = vec[1];
@@ -333,14 +325,18 @@ fn main() {
         &na::Rotation3::new(na::Vector3::new(
             0.0,
             0.0,
-            matches.value_of("gamma_rot").unwrap().parse().unwrap(),
+            matches
+                .value_of("gamma_rot")
+                .unwrap_or("0")
+                .parse()
+                .unwrap(),
         )),
     );
     rotate_obj(
         &mut obj,
         &na::Rotation3::new(na::Vector3::new(
             0.0,
-            matches.value_of("beta_rot").unwrap().parse().unwrap(),
+            matches.value_of("beta_rot").unwrap_or("0").parse().unwrap(),
             0.0,
         )),
     );
@@ -349,7 +345,11 @@ fn main() {
         &na::Rotation3::new(na::Vector3::new(
             0.0,
             0.0,
-            matches.value_of("alpha_rot").unwrap().parse().unwrap(),
+            matches
+                .value_of("alpha_rot")
+                .unwrap_or("0")
+                .parse()
+                .unwrap(),
         )),
     );
 
@@ -372,21 +372,25 @@ fn main() {
     {
         voxel_grid_cube_size(
             if double { 2 * size } else { size },
-            &obj.position,
+            &obj.data.position,
             cube_size,
         )
     } else {
-        voxel_grid(if double { 2 * size } else { size }, border, &obj.position)
+        voxel_grid(
+            if double { 2 * size } else { size },
+            border,
+            &obj.data.position,
+        )
     };
 
-    for object in obj.objects {
+    for object in obj.data.objects {
         for group in object.groups {
             for face in group.polys {
-                for k in 1..face.len() - 1 {
+                for k in 1..face.0.len() - 1 {
                     let triverts = [
-                        obj.position[face[0].0],
-                        obj.position[face[k].0],
-                        obj.position[face[k + 1].0],
+                        obj.data.position[face.0[0].0],
+                        obj.data.position[face.0[k].0],
+                        obj.data.position[face.0[k + 1].0],
                     ];
 
                     for (i, j, k) in tri_voxel_overlap(
