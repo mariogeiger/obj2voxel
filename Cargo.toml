@@ -1,14 +1,14 @@
 [package]
 name = "obj2voxel"
-version = "0.2.2"
-authors = ["Mario Geiger <geiger.mario@gmail.com>"]
+version = "0.2.3"
+authors = ["Mario Geiger <mge@ik.me>"]
 edition = "2018"
 
 [dependencies]
 obj = "*"
 clap = "*"
-npy = "0.4"
-npy-derive = "0.4"
+npy = "*"
+npy-derive = "*"
 kiss3d = { version = "*", optional = true }
 nalgebra = "*"
 rand = "*"

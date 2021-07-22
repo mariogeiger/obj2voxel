@@ -13,9 +13,9 @@ use std::path::Path;
 #[cfg(feature = "viewer")]
 use kiss3d::light::Light;
 #[cfg(feature = "viewer")]
-use kiss3d::window::Window;
+use kiss3d::nalgebra::Translation3;
 #[cfg(feature = "viewer")]
-use na::Translation3;
+use kiss3d::window::Window;
 
 mod tribox;
 
