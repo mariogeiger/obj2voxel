@@ -3,7 +3,7 @@ Convert [.obj](https://en.wikipedia.org/wiki/Wavefront_.obj_file) to voxels
 
 ## Install
 1. [install rust](https://www.rustup.rs/)
-2. `cargo install`
+2. `cargo install --git https://github.com/mariogeiger/obj2voxel`
 
 ## Usage
 
