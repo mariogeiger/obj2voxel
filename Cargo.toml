@@ -17,4 +17,4 @@ clippy = {version = "*", optional = true}
 
 [features]
 default = []
-viewer = ["kiss3d"]
+viewer = ["kiss3d"]  # cargo build --features viewer
