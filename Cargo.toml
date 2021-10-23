@@ -1,6 +1,6 @@
 [package]
 name = "obj2voxel"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["Mario Geiger <mge@ik.me>"]
 edition = "2018"
 
