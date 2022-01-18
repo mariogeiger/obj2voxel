@@ -200,19 +200,19 @@ fn main() {
         .author("Mario <geiger.mario@gmail.com>")
         .about("Convert Obj file into voxel")
         .arg(
-            clap::Arg::with_name("INPUT")
+            clap::Arg::new("INPUT")
                 .help("The input Obj file to read")
                 .required(true)
                 .index(1),
         )
         .arg(
-            clap::Arg::with_name("OUTPUT")
+            clap::Arg::new("OUTPUT")
                 .help("The output numpy file to write in")
                 .required(false)
                 .index(2),
         )
         .arg(
-            clap::Arg::with_name("size")
+            clap::Arg::new("size")
                 .long("size")
                 .value_name("SIZE")
                 .required(true)
@@ -220,7 +220,7 @@ fn main() {
                 .takes_value(true),
         )
         .arg(
-            clap::Arg::with_name("border")
+            clap::Arg::new("border")
                 .long("border")
                 .value_name("B")
                 .help(
@@ -230,23 +230,23 @@ fn main() {
                 .takes_value(true),
         )
         .arg(
-            clap::Arg::with_name("view")
-                .short("v")
+            clap::Arg::new("view")
+                .short('v')
                 .long("view")
                 .help("Visualize the result in 3D"),
         )
         .arg(
-            clap::Arg::with_name("double")
+            clap::Arg::new("double")
                 .long("double")
                 .help("Each cube is redered from 8 smaller cubes"),
         )
         .arg(
-            clap::Arg::with_name("rotate")
+            clap::Arg::new("rotate")
                 .long("rotate")
                 .help("Apply a random rotation"),
         )
         .arg(
-            clap::Arg::with_name("alpha_rot")
+            clap::Arg::new("alpha_rot")
                 .long("alpha_rot")
                 .value_name("ALPHA")
                 .default_value("0.0")
@@ -254,7 +254,7 @@ fn main() {
                 .takes_value(true),
         )
         .arg(
-            clap::Arg::with_name("beta_rot")
+            clap::Arg::new("beta_rot")
                 .long("beta_rot")
                 .value_name("BETA")
                 .default_value("0.0")
@@ -262,7 +262,7 @@ fn main() {
                 .takes_value(true),
         )
         .arg(
-            clap::Arg::with_name("gamma_rot")
+            clap::Arg::new("gamma_rot")
                 .long("gamma_rot")
                 .value_name("GAMMA")
                 .default_value("0.0")
@@ -270,14 +270,14 @@ fn main() {
                 .takes_value(true),
         )
         .arg(
-            clap::Arg::with_name("diagonal_bounding_box_xy")
+            clap::Arg::new("diagonal_bounding_box_xy")
                 .long("diagonal_bounding_box_xy")
                 .help(
                     "Compute the cube size from the diagonal of the original BB in xy directions",
                 ),
         )
         .arg(
-            clap::Arg::with_name("diagonal_bounding_box")
+            clap::Arg::new("diagonal_bounding_box")
                 .long("diagonal_bounding_box")
                 .help("Compute the cube size from the diagonal of the original BB"),
         )
