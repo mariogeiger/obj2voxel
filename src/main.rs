@@ -195,7 +195,7 @@ fn visualize(_voxel: &[u8], _size: usize) {
 }
 
 fn main() {
-    let matches = clap::App::new("obj2voxel")
+    let matches = clap::Command::new("obj2voxel")
         .version("1.0")
         .author("Mario <geiger.mario@gmail.com>")
         .about("Convert Obj file into voxel")
