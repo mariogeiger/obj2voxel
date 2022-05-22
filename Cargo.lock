@@ -861,7 +861,7 @@ dependencies = [
  "image",
  "instant",
  "libc",
- "nalgebra",
+ "nalgebra 0.30.1",
  "ncollide3d",
  "num-traits",
  "rusttype 0.8.3",
@@ -1091,6 +1091,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "nalgebra"
+version = "0.31.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "18a89248335f688e4bd994e6d030fd7e185eb41769b8c435395075425e100ac6"
+dependencies = [
+ "approx 0.5.1",
+ "matrixmultiply",
+ "nalgebra-macros",
+ "num-complex",
+ "num-rational 0.4.0",
+ "num-traits",
+ "simba",
+ "typenum",
+]
+
+[[package]]
 name = "nalgebra-macros"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1111,7 +1127,7 @@ dependencies = [
  "bitflags",
  "downcast-rs",
  "either",
- "nalgebra",
+ "nalgebra 0.30.1",
  "num-traits",
  "petgraph",
  "simba",
@@ -1341,12 +1357,12 @@ checksum = "059c95245738cdc7b40078cdd51a23200252a4c0a0a6dd005136152b3f467a4a"
 
 [[package]]
 name = "obj2voxel"
-version = "0.2.4"
+version = "0.2.5"
 dependencies = [
  "clap",
  "clippy",
  "kiss3d",
- "nalgebra",
+ "nalgebra 0.31.0",
  "npy",
  "npy-derive",
  "obj",
