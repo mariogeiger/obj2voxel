@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 obj = "0.10.2"
-clap = "3.1.6"
+clap = "3.1.18"
 npy = "0.4.0"
 npy-derive = "0.4.0"
 kiss3d = { version = "0.34.0", optional = true }
